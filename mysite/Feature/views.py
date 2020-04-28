@@ -26,11 +26,25 @@ def index(request):
         name = request.POST.get('name', '')
         percent = request.POST.get('percent', '')
         enabled = request.POST.get('enabled', '')
-        newFeature = Feature(id, name, percent, enabled)
-        newFeature.save()
+        new_feature = Feature(id, name, percent, enabled)
+        new_feature.save()
         return HttpResponse('Nice', status=200)
-    elif request.method == 'PATCH:':
-        
+    elif request.method == 'PATCH':
+        id = request.GET.get('id', '')
+        feature_to_update = Feature.objects.get(id=id)
+
+        if request.GET.get('name', ''):
+            feature_to_update.name = request.GET.get('name', '')
+        if request.GET.get('percent', ''):
+            feature_to_update.percent = request.GET.get('percent', '')
+        if request.GET.get('enabled', ''):
+            feature_to_update.enabled = request.GET.get('enabled', '')
+
+        feature_to_update.save()
+
         return HttpResponse('Nice', status=200)
     elif request.method == 'DELETE':
-        return HttpResponse(request.POST)
+        id = request.GET.get('id', '')
+        Feature.objects.filter(id=id).delete()
+
+        return HttpResponse('Nice', status=200)
