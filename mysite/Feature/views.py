@@ -13,22 +13,42 @@ from .models import Feature
 
 @csrf_exempt
 def index(request):
+
+    # Getting Feature(s) from DB
     if request.method == 'GET':
+
+        # Given a single Feature based on ID
         if request.GET.get('id', ''):
             id = request.GET.get('id', '')
             feature = Feature.objects.filter(id=id).values()
-            return HttpResponse(feature)
+            feat_json = feature_to_json(feature[0])
+
+            return JsonResponse(feat_json)
+
+        # All Features if no ID is given
         else:
-            features = Feature.objects.all().values()
-            return HttpResponse(features)
+            features = Feature.objects.all()
+            feat_json = {}
+            for f in features:
+                feat_json[f.id] = feature_to_json(f)
+
+            return JsonResponse(feat_json)
+
+    # Creating a new Feature
     elif request.method == 'POST':
-        id = request.POST.get('id', '')
-        name = request.POST.get('name', '')
-        percent = request.POST.get('percent', '')
-        enabled = request.POST.get('enabled', '')
-        new_feature = Feature(id, name, percent, enabled)
-        new_feature.save()
+        print(request.POST.get('id', ''))
+        # id = request.POST.get('id', '')
+        # name = request.POST.get('name', '')
+        # percent = request.POST.get('percent', '')
+        # enabled = request.POST.get('enabled', '')
+        #
+        # new_feature = Feature(id, name, percent, enabled)
+        #
+        # new_feature.save()
+
         return HttpResponse('Nice', status=200)
+
+    # Updating an existing Feature
     elif request.method == 'PATCH':
         id = request.GET.get('id', '')
         feature_to_update = Feature.objects.get(id=id)
@@ -43,8 +63,22 @@ def index(request):
         feature_to_update.save()
 
         return HttpResponse('Nice', status=200)
+
+    # Deletes an existing Feature
     elif request.method == 'DELETE':
         id = request.GET.get('id', '')
         Feature.objects.filter(id=id).delete()
 
         return HttpResponse('Nice', status=200)
+
+# Converts a single Feature object to JSON
+def feature_to_json(feat):
+
+    fj = {
+        'id': feat.id,
+        'name': feat.name,
+        'percent': feat.percent,
+        'enabled': feat.enabled
+    }
+
+    return fj
