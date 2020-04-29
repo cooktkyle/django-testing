@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from django.views.decorators.csrf import csrf_exempt
 
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
+
+import json
 
 from .models import Feature
 
@@ -15,7 +17,6 @@ from .models import Feature
 def index(request):
 
     if request.method == 'OPTIONS':
-        print('GOT OPTIONS')
         return HttpResponse('Success', status=204)
 
     # Getting Feature(s) from DB
@@ -40,15 +41,18 @@ def index(request):
 
     # Creating a new Feature
     elif request.method == 'POST':
-        print(request.POST.get('id', ''))
-        # id = request.POST.get('id', '')
-        # name = request.POST.get('name', '')
-        # percent = request.POST.get('percent', '')
-        # enabled = request.POST.get('enabled', '')
-        #
-        # new_feature = Feature(id, name, percent, enabled)
-        #
-        # new_feature.save()
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        for key in body:
+            feat = body[key]
+            id = feat['id']
+            name = feat['name']
+            percent = feat['percent']
+            enabled = feat['enabled']
+
+            new_feature = Feature(id, name, percent, enabled)
+
+            new_feature.save()
 
         return HttpResponse('Nice', status=200)
 
@@ -75,6 +79,21 @@ def index(request):
 
         return HttpResponse('Nice', status=200)
 
+# Finds feature given its name
+def search(request):
+    if request.method == "GET":
+        name = request.GET.get('name', '')
+
+        features = Feature.objects.filter(name=name)
+
+        feat_json = {
+            'names': []
+        }
+
+        for f in features:
+            feat_json['names'].append(feature_to_json(f)['name'])
+
+        return JsonResponse(feat_json)
 
 # Converts a single Feature object to JSON
 def feature_to_json(feat):
