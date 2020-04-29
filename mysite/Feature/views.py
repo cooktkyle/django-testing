@@ -14,8 +14,12 @@ from .models import Feature
 @csrf_exempt
 def index(request):
 
+    if request.method == 'OPTIONS':
+        print('GOT OPTIONS')
+        return HttpResponse('Success', status=204)
+
     # Getting Feature(s) from DB
-    if request.method == 'GET':
+    elif request.method == 'GET':
 
         # Given a single Feature based on ID
         if request.GET.get('id', ''):
@@ -71,6 +75,7 @@ def index(request):
 
         return HttpResponse('Nice', status=200)
 
+
 # Converts a single Feature object to JSON
 def feature_to_json(feat):
 
@@ -82,3 +87,4 @@ def feature_to_json(feat):
     }
 
     return fj
+
