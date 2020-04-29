@@ -56,17 +56,29 @@ def index(request):
 
         return HttpResponse('Nice', status=200)
 
-    # Updating an existing Feature
+    # Updating an existing Features
     elif request.method == 'PATCH':
-        id = request.GET.get('id', '')
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        id = body['id']
+
         feature_to_update = Feature.objects.get(id=id)
 
-        if request.GET.get('name', ''):
-            feature_to_update.name = request.GET.get('name', '')
-        if request.GET.get('percent', ''):
-            feature_to_update.percent = request.GET.get('percent', '')
-        if request.GET.get('enabled', ''):
-            feature_to_update.enabled = request.GET.get('enabled', '')
+        try:
+            feature_to_update.name = body['name']
+        except KeyError:
+            pass
+
+        try:
+            feature_to_update.percent = body['percent']
+        except KeyError:
+            pass
+
+        try:
+            feature_to_update.enabled = body['enabled']
+        except KeyError:
+            pass
+
 
         feature_to_update.save()
 
@@ -79,6 +91,7 @@ def index(request):
 
         return HttpResponse('Nice', status=200)
 
+
 # Finds feature given its name
 def search(request):
     if request.method == "GET":
@@ -86,14 +99,12 @@ def search(request):
 
         features = Feature.objects.filter(name=name)
 
-        feat_json = {
-            'names': []
-        }
-
+        feat_json = {}
         for f in features:
-            feat_json['names'].append(feature_to_json(f)['name'])
+            feat_json[f.id] = feature_to_json(f)
 
         return JsonResponse(feat_json)
+
 
 # Converts a single Feature object to JSON
 def feature_to_json(feat):
