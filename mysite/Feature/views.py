@@ -43,18 +43,44 @@ def index(request):
     elif request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
+
+        # Fields to validate
+        features = Feature.objects.all()
+        feature_IDs = []
+        feature_names = []
+
+        for f in features:
+            feature_names.append(f.name)
+            feature_IDs.append(f.id)
+
+        available_id = get_available_id(feature_IDs)
+
+        invalid_features = {}
+        created_features = {}
+
         for key in body:
             feat = body[key]
-            id = feat['id']
+
             name = feat['name']
+            if name in feature_names:
+                invalid_features[key] = body[key]
+                continue
+
+            id = available_id
+            # Deconstructs, increments, reconstructs
+            available_id = 'F' + str(int(available_id[1:]) + 1)
+
             percent = feat['percent']
             enabled = feat['enabled']
 
             new_feature = Feature(id, name, percent, enabled)
-
             new_feature.save()
+            created_features[new_feature.id] = feature_to_json(new_feature)
 
-        return HttpResponse('Nice', status=200)
+        if len(invalid_features) > 0:
+            return JsonResponse(invalid_features, status=207)
+        else:
+            return JsonResponse(created_features, status=201)
 
     # Updating an existing Features
     elif request.method == 'PATCH':
@@ -78,7 +104,6 @@ def index(request):
             feature_to_update.enabled = body['enabled']
         except KeyError:
             pass
-
 
         feature_to_update.save()
 
@@ -117,4 +142,14 @@ def feature_to_json(feat):
     }
 
     return fj
+
+
+# Gets the next available id
+def get_available_id(ids):
+    if len(ids) == 0:
+        return 'F0'
+    else:
+        ids_as_numbers = [int(id[1:]) for id in ids]
+        max_id = max(ids_as_numbers) + 1
+        return 'F' + str(max_id)
 
