@@ -44,7 +44,7 @@ def index(request):
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
 
-        # Fields to validate
+        # Gather fields to validate
         features = Feature.objects.all()
         feature_IDs = []
         feature_names = []
@@ -53,14 +53,17 @@ def index(request):
             feature_names.append(f.name)
             feature_IDs.append(f.id)
 
+        # Get starting value for ID
         available_id = get_available_id(feature_IDs)
 
         invalid_features = {}
         created_features = {}
 
+        # Iterate through post data
         for key in body:
             feat = body[key]
 
+            # If the name is not unique, skip and add to return
             name = feat['name']
             if name in feature_names:
                 invalid_features[key] = body[key]
@@ -73,10 +76,12 @@ def index(request):
             percent = feat['percent']
             enabled = feat['enabled']
 
+            # Create, save, and add to return successful creation
             new_feature = Feature(id, name, percent, enabled)
             new_feature.save()
             created_features[new_feature.id] = feature_to_json(new_feature)
 
+        # If there was unsuccessful Feature or all successful
         if len(invalid_features) > 0:
             return JsonResponse(invalid_features, status=207)
         else:
@@ -90,6 +95,7 @@ def index(request):
 
         feature_to_update = Feature.objects.get(id=id)
 
+        # Gather and update specified fields
         try:
             feature_to_update.name = body['name']
         except KeyError:
@@ -105,16 +111,17 @@ def index(request):
         except KeyError:
             pass
 
+        # Save and return
         feature_to_update.save()
 
-        return HttpResponse('Nice', status=200)
+        return JsonResponse(feature_to_json(feature_to_update), status=200)
 
     # Deletes an existing Feature
     elif request.method == 'DELETE':
         id = request.GET.get('id', '')
         Feature.objects.filter(id=id).delete()
 
-        return HttpResponse('Nice', status=200)
+        return HttpResponse('', status=205)
 
 
 # Finds feature given its name
@@ -149,6 +156,7 @@ def get_available_id(ids):
     if len(ids) == 0:
         return 'F0'
     else:
+        # Ignoring leading F, incrementing, prepending F
         ids_as_numbers = [int(id[1:]) for id in ids]
         max_id = max(ids_as_numbers) + 1
         return 'F' + str(max_id)
