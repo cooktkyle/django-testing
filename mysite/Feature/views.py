@@ -17,7 +17,7 @@ from .models import Feature
 def index(request):
 
     if request.method == 'OPTIONS':
-        return HttpResponse('Success', status=204)
+        return HttpResponse('', status=204)
 
     # Getting Feature(s) from DB
     elif request.method == 'GET':
@@ -28,7 +28,7 @@ def index(request):
             feature = Feature.objects.filter(id=id).values()
             feat_json = feature_to_json(feature[0])
 
-            return JsonResponse(feat_json)
+            return JsonResponse(feat_json, status=200)
 
         # All Features if no ID is given
         else:
@@ -37,7 +37,7 @@ def index(request):
             for f in features:
                 feat_json[f.id] = feature_to_json(f)
 
-            return JsonResponse(feat_json)
+            return JsonResponse(feat_json, status=200)
 
     # Creating a new Feature
     elif request.method == 'POST':
@@ -135,7 +135,7 @@ def search(request):
         for f in features:
             feat_json[f.id] = feature_to_json(f)
 
-        return JsonResponse(feat_json)
+        return JsonResponse(feat_json, status=200)
 
 
 # Converts a single Feature object to JSON
